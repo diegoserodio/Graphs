@@ -1,18 +1,23 @@
-var source = [], targets = [];
+var source = [], targets = [], gini = [];
 
 function preload() {
-  var csv = loadStrings("data/dados_teste_3.csv", handleFile);
+  var csv = loadStrings("data/dados_teste_4.csv", handleFile);
+  var gini_indice = loadStrings("data/teste_gini_2.csv", handleGiniFile);
 }
 
 function handleFile(file){
-	//var companies = [];
 	for(var i = 0; i < file.length; i++){
-		// companies[i] = file[i].split(',')[0];
-		source[i] = file[i].split(',')[0].replace(/\"/g, "").replace(" ","").trim();
+		source[i] = file[i].split(',')[0].replace(/\"/g, "").trim();
 		targets[i] = [];
 		for(var j = 1; j < file[i].split(',').length; j++){
-			targets[i][j-1] = file[i].split(',')[j].replace(/\"/g, "").replace(" ","").trim();
+			targets[i][j-1] = file[i].split(',')[j].replace(/\"/g, "").trim();
 		}
+	}
+}
+
+function handleGiniFile(file){
+  for(var i = 0; i < file.length; i++){
+		gini[i] = parseFloat(file[i].replace(/\"/g, "").replace(",", ".").trim());
 	}
 }
 
@@ -21,10 +26,11 @@ let graph;
 function setup() {
 	createCanvas(windowWidth, windowHeight);
 	graph = new Graph();
-	graph.generateGraphFromFile(source, targets);
+	graph.generateGraphFromArray(source, targets);
+  graph.setWeights(gini);
 }
 
 function draw() {
-  background(0, 0, 0);
+  background(0);
 	graph.show();
 }
