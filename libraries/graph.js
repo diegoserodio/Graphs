@@ -22,6 +22,7 @@ class Graph{
       }
     }
     this.createLinks(source, targets);
+    this.setLocations();
   }
 
   existsNode(label){
@@ -87,74 +88,81 @@ class Graph{
       fill(0, 255, 0);
       text(i, node.position.x-node.size/2, node.position.y-node.size/2);
     }
-    this.dominanceArea();
+    if(this.nodesOverlap){
+      this.spreadNodes();
+    }
+  }
+
+  nodesOverlap(){
+    for(var i = 0; i < this.node.length; i++){
+      for(var j = i+1; j < this.node.length; j++){
+        var node_a = this.node[i];
+        var node_b = this.node[j];
+        var dist = getDistance(node_a, node_b);
+        if(dist <= node_a.size/2+node_b.size/2){
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  getDistance(a, b){
+    var delta_x = a.position.x-b.position.x;
+    var delta_y = a.position.y-b.position.y;
+    return Math.sqrt(delta_x*delta_x + delta_y*delta_y);
+  }
+
+  xyOrientation(a, b){
+    var orientation = {
+      x: 0,
+      y: 0
+    }
+    if(a.position.x >= b.position.x){
+      orientation.x = 1;
+    }else{
+      orientation.x = -1;
+    }
+    if(a.position.y >= b.position.y){
+      orientation.y = 1;
+    }else{
+      orientation.y = -1;
+    }
+    return orientation;
   }
 
   drawArrow(a, b){
-    var x_orientation = 0, y_orientation = 0;
-    if(b.position.x >= a.position.x){
-      x_orientation = -1;
-    }else{
-      x_orientation = 1;
-    }
-    if(b.position.y >= a.position.y){
-      y_orientation = -1;
-    }else{
-      y_orientation = 1;
-    }
+    var orientation = this.xyOrientation(a, b);
     var theta = Math.atan(Math.abs((b.position.y-a.position.y)/(b.position.x-a.position.x)));
     var radius = b.size/2;
-    var x = b.position.x + radius*Math.cos(theta)*x_orientation;
-    var y = b.position.y + radius*Math.sin(theta)*y_orientation;
+    var x = b.position.x + radius*Math.cos(theta)*orientation.x;
+    var y = b.position.y + radius*Math.sin(theta)*orientation.y;
     fill(255, 0, 0);
     noStroke();
     ellipse(x, y, 6);
   }
 
-  dominanceArea(){
-    var delta_d = 1;
+  setLocations(){
     for(var i = 0; i < this.node.length; i++){
-      var node_a = this.node[i];
-      var dominance = node_a.links.length*5;
-      noStroke();
-      fill(50, 50, 50);
-      if(dominance != 0){
-        for(var j = i; j < this.node.length; j++){
-          var node_b = this.node[j];
-          if(node_b.links.length != 0){
-            var delta_x = node_a.position.x-node_b.position.x;
-            var delta_y = node_a.position.y-node_b.position.y;
-            var dist = Math.sqrt(delta_x*delta_x + delta_y*delta_y);
-            if(dist != 0 && dist <= dominance/2+node_b.links.length/2){
-              fill(255, 0, 0);
-              var x_orientation = 0, y_orientation = 0;
-              if(node_a.position.x >= node_b.position.x){
-                x_orientation = 1;
-              }else{
-                x_orientation = -1;
-              }
-              if(node_a.position.y >= node_b.position.y){
-                y_orientation = 1;
-              }else{
-                y_orientation = -1;
-              }
-              node_a.position.x += x_orientation*delta_d;
-              node_a.position.y += y_orientation*delta_d;
-              if(node_a.position.x <= node_a.size/2){
-                node_a.position.x = node_a.size/2;
-              }else if(node_a.position.x >= windowWidth-node_a.size/2){
-                node_a.position.x = windowWidth-node_a.size/2;
-              }
-              if(node_a.position.y <= node_a.size/2){
-                node_a.position.y = node_a.size/2;
-              }else if(node_a.position.y >= windowHeight-node_a.size/2){
-                node_a.position.y = windowHeight-node_a.size/2;
-              }
-            }
-          }
+      var node = this.node[i];
+      for(var j = 0; j < this.node[i].links.length; j++){
+        var theta = random(0, TWO_PI);
+        var radius = this.node[i].links.length;
+        this.node[i].links[j].setPosition(node.position.x+radius*Math.cos(theta), node.position.y-radius*Math.sin(theta));
+      }
+    }
+  }
+
+  spreadNodes(){
+    for(var i = 0; i < this.node.length; i++){
+      for(var j = i+1; j < this.node.length; j++){
+        var node_a = this.node[i];
+        var node_b = this.node[j];
+        var dist = this.getDistance(node_a, node_b);
+        if(dist != 0 && dist <= (node_a.size/2+(node_a.links.length+1)*2)+(node_b.size/2+(node_b.links.length+1)*2)){
+          node_a.move(this.xyOrientation(node_a, node_b));
         }
       }
-      //ellipse(node_a.position.x, node_a.position.y, dominance);
     }
   }
 }
@@ -167,18 +175,50 @@ class Node{
     this.size = 0;
     this.color = color;
     this.position = {
-      x: floor(random(this.size, windowWidth-this.size)),
-      y: floor(random(this.size, windowHeight-this.size))
+      // x: floor(random(this.size+50, windowWidth-this.size-50)),
+      // y: floor(random(this.size+50, windowHeight-this.size-50))
+      x: floor(random(windowWidth/2-0, windowWidth/2+0)),
+      y: floor(random(windowHeight/2-0, windowHeight/2+0))
     }
   }
 
   connect(node){
     this.links.push(node);
   }
+
+  move(delta){
+    this.position.x += delta.x;
+    this.position.y += delta.y;
+    if(this.position.x <= this.size/2+10){
+      this.position.x = this.size/2+10;
+    }else if(this.position.x >= windowWidth-this.size/2-10){
+      this.position.x = windowWidth-this.size/2-10;
+    }
+    if(this.position.y <= this.size/2+10){
+      this.position.y = this.size/2+10;
+    }else if(this.position.y >= windowHeight-this.size/2-10){
+      this.position.y = windowHeight-this.size/2-10;
+    }
+  }
+
+  setPosition(x, y){
+    this.position.x = x;
+    this.position.y = y;
+    if(this.position.x <= this.size/2+10){
+      this.position.x = this.size/2+10;
+    }else if(this.position.x >= windowWidth-this.size/2-10){
+      this.position.x = windowWidth-this.size/2-10;
+    }
+    if(this.position.y <= this.size/2+10){
+      this.position.y = this.size/2+10;
+    }else if(this.position.y >= windowHeight-this.size/2-10){
+      this.position.y = windowHeight-this.size/2-10;
+    }
+  }
 }
 
 class Link{
-  constructor(sourceNode, targetNode, weight = 0, color = {r:220, g:220, b:220}){
+  constructor(sourceNode, targetNode, weight = 0, color = {r:255, g:255, b:255}){
     this.weight = weight;
     this.sourceNode = sourceNode;
     this.targetNode = targetNode;
