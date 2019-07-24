@@ -1,33 +1,22 @@
-var source = [], targets = [], gini = [];
-
-function preload() {
-  var csv = loadStrings("data/dados_teste_4.csv", handleFile);
-  var gini_indice = loadStrings("data/teste_gini_2.csv", handleGiniFile);
-}
-
-function handleFile(file){
-	for(var i = 0; i < file.length; i++){
-		source[i] = file[i].split(',')[0].replace(/\"/g, "").trim();
-		targets[i] = [];
-		for(var j = 1; j < file[i].split(',').length; j++){
-			targets[i][j-1] = file[i].split(',')[j].replace(/\"/g, "").trim();
-		}
-	}
-}
-
-function handleGiniFile(file){
-  for(var i = 0; i < file.length; i++){
-		gini[i] = parseFloat(file[i].replace(/\"/g, "").replace(",", ".").trim());
-	}
-}
-
 let graph;
+
+var s = [], t = [], w = [], n = 30, u = ['Diego', 'Diego', 'Diego', 'Mika', 'Pedro', 'Victória', 'Pedro', 'Mika', 'Mika', 'Diego'], v = ['Pedro', 'Mika', 'Henrique', 'Pedro', 'Caique', 'Bruno', 'Guilherme', 'Diego', 'Victória', 'Guilherme'];
 
 function setup() {
 	createCanvas(windowWidth, windowHeight);
-	graph = new Graph();
-	graph.generateGraphFromArray(source, targets);
-  graph.setWeights(gini);
+  for(var i = 0; i < n; i++){
+    var a = floor(random(n));
+    var b = floor(random(n));
+    var c = random(10, 50);
+    s.push(a);
+    t.push(b);
+    w.push(c);
+  }
+	graph = new Graph(50);
+  // graph.makeEmptyGraph(n);
+  // graph.createLinks(s, t);
+  // graph.setWeights(w);
+	graph.generateGraphFromArray(u, v);
 }
 
 function draw() {

@@ -1,8 +1,24 @@
 class Graph{
-  constructor(){
+  constructor(size = 50, directed = true){
+    this.directed = directed;
+    this.size = size;
     this.node = [];
     this.link = [];
     this.label = [];
+    this.nodePressed = undefined;
+    this.g = createCanvas(windowWidth, windowHeight);
+    this.g.mousePressed((e)=>{this.nodePressed=this.getNodeBelow(e.pageX, e.pageY);});
+    this.g.mouseMoved((e)=>{this.moveNode(this.nodePressed, e);});
+    this.g.mouseReleased(()=>{this.nodePressed=undefined});
+  }
+
+  //////////////////////////////////////////////GRAPH GENERATORS
+
+  makeEmptyGraph(n){
+    for(var i = 0; i < n; i++){
+      this.label[i]= i;
+      this.node[i] = new Node(i, this.size);
+    }
   }
 
   generateGraphFromArray(source, targets){
@@ -10,102 +26,54 @@ class Graph{
     for(var i = 0; i < source.length; i++){
       if(!this.existsNode(source[i])){
         this.label[source[i]]= nodes_qtn;
-        this.node[nodes_qtn] = new Node(source[i]);
+        this.node[nodes_qtn] = new Node(source[i], this.size);
         nodes_qtn++;
       }
-      for(var j = 0; j < targets[i].length; j++){
-        if(!this.existsNode(targets[i][j])){
-          this.label[targets[i][j]]= nodes_qtn;
-          this.node[nodes_qtn] = new Node(targets[i][j]);
-          nodes_qtn++;
-        }
+      if(!this.existsNode(targets[i])){
+        this.label[targets[i]]= nodes_qtn;
+        this.node[nodes_qtn] = new Node(targets[i], this.size);
+        nodes_qtn++;
       }
     }
     this.createLinks(source, targets);
-    this.setLocations();
-  }
-
-  existsNode(label){
-    for(var i = 0; i < this.node.length; i++){
-      if(label == this.node[i].label){
-        return true;
-      }
-    }
-    return false;
   }
 
   createLinks(source, targets){
-    var links_qtn = 0;
     for(var i = 0; i < source.length; i++){
-      for(var j = 0; j < targets[i].length; j++){
-        this.node[this.label[source[i]]].connect(this.node[this.label[targets[i][j]]]);
-        //------FOR NON-DIRECTED GRAPH UNCOMMENT LINE BELOW------
-        //this.node[this.label[targets[i][j]]].connect(this.node[this.label[source[i]]]);
+      var node_a = this.node[this.label[source[i]]], node_b = this.node[this.label[targets[i]]];
+      node_a.connect(node_b);
+      this.link[i] = new Link(node_a, node_b);
+      if(!this.directed){
+        node_b.connect(node_a);
+        this.link[i] = new Link(node_b, node_b.links[0]);
       }
     }
-    for(var i = 0; i < this.node.length; i++){
-      for(var j = 0; j < this.node[i].links.length; j++){
-        var node = this.node[i];
-        this.link[links_qtn] = new Link(node, node.links[j]);
-        links_qtn++;
-      }
-    }
+    this.setLocations();
   }
 
   setWeights(weights){
     for(var i = 0; i < this.node.length; i++){
       if(weights[i]!=0){
         this.node[i].weight = weights[i];
-        this.node[i].size = (weights[i]*15)*(weights[i]*15);
-      }else{
-        this.node[i].weight = 0;
-        this.node[i].size = 20;
-        this.node[i].color = {
-          r: 100,
-          g: 100,
-          b: 100
-        };
+        this.node[i].size = weights[i];
       }
     }
   }
 
-  show(){
-    for(var i = 0; i < this.node.length; i++){
-      for(var j = 0; j < this.node[i].links.length; j++){
-        var node = this.node[i];
-        var link = this.link[j];
-        stroke(link.color.r, link.color.g, link.color.b);
-        strokeWeight(link.weight+1);
-        line(node.position.x, node.position.y, node.links[j].position.x, node.links[j].position.y);
-        this.drawArrow(node, node.links[j]);
-      }
-    }
+  setLocations(){
     for(var i = 0; i < this.node.length; i++){
       var node = this.node[i];
-      fill(node.color.r, node.color.g, node.color.b);
-      stroke(0,0,0);
-      ellipse(node.position.x, node.position.y, node.size);
-      fill(0, 255, 0);
-      text(i, node.position.x-node.size/2, node.position.y-node.size/2);
-    }
-    if(this.nodesOverlap){
-      this.spreadNodes();
+      for(var j = 0; j < this.node[i].links.length; j++){
+        var theta = random(0, TWO_PI);
+        var radius = this.node[i].links.length;
+        var x = node.position.x+radius*Math.cos(theta)*20;
+        var y = node.position.y-radius*Math.sin(theta)*20;
+        this.node[i].links[j].setPosition(x, y);
+      }
     }
   }
 
-  nodesOverlap(){
-    for(var i = 0; i < this.node.length; i++){
-      for(var j = i+1; j < this.node.length; j++){
-        var node_a = this.node[i];
-        var node_b = this.node[j];
-        var dist = getDistance(node_a, node_b);
-        if(dist <= node_a.size/2+node_b.size/2){
-          return true;
-        }
-      }
-    }
-    return false;
-  }
+  //////////////////////////////////////////////MATH FUNCTIONS
 
   getDistance(a, b){
     var delta_x = a.position.x-b.position.x;
@@ -131,6 +99,72 @@ class Graph{
     return orientation;
   }
 
+  //////////////////////////////////////////////VALIDATORS
+
+  existsNode(label){
+    for(var i = 0; i < this.node.length; i++){
+      if(label == this.node[i].label){
+        return true;
+      }
+    }
+    return false;
+  }
+
+  nodesOverlap(){
+    for(var i = 0; i < this.node.length; i++){
+      for(var j = i+1; j < this.node.length; j++){
+        var node_a = this.node[i];
+        var node_b = this.node[j];
+        var dist = getDistance(node_a, node_b);
+        if(dist <= node_a.size/2+node_b.size/2){
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  //////////////////////////////////////////////USER INTERACTION
+
+  getNodeBelow(x, y){
+    for(var i = 0; i < this.node.length; i++){
+      var radius = this.node[i].size/2;
+      var node_x = this.node[i].position.x;
+      var node_y = this.node[i].position.y;
+      var delta_x = x-node_x;
+      var delta_y = y-node_y;
+      var dist = Math.sqrt(delta_x*delta_x + delta_y*delta_y);
+      if(dist <= radius){
+        return this.node[i];
+      }
+    }
+  }
+
+  moveNode(node, position){
+    var x = position.pageX, y = position.pageY;
+    if(node != undefined){
+      node.setPosition(x, y);
+    }
+  }
+
+  //////////////////////////////////////////////GRAPH VISUALIZATION
+
+  spreadNodes(spreadLevel){
+    for(var i = 0; i < this.node.length-1; i++){
+      for(var j = i+1; j < this.node.length; j++){
+        var node_a = this.node[i];
+        var node_b = this.node[j];
+        var radius_a = node_a.size/2+(node_a.links.length+1)*spreadLevel;
+        var radius_b = node_b.size/2+(node_b.links.length+1)*spreadLevel;
+        var dist = this.getDistance(node_a, node_b);
+        if(dist <= radius_a+radius_b){
+          node_a.move(this.xyOrientation(node_a, node_b));
+          node_b.move(this.xyOrientation(node_b, node_a));
+        }
+      }
+    }
+  }
+
   drawArrow(a, b){
     var orientation = this.xyOrientation(a, b);
     var theta = Math.atan(Math.abs((b.position.y-a.position.y)/(b.position.x-a.position.x)));
@@ -139,46 +173,47 @@ class Graph{
     var y = b.position.y + radius*Math.sin(theta)*orientation.y;
     fill(255, 0, 0);
     noStroke();
-    ellipse(x, y, 6);
+    ellipse(x, y, 8);
   }
 
-  setLocations(){
+  show(){
     for(var i = 0; i < this.node.length; i++){
-      var node = this.node[i];
       for(var j = 0; j < this.node[i].links.length; j++){
-        var theta = random(0, TWO_PI);
-        var radius = this.node[i].links.length;
-        this.node[i].links[j].setPosition(node.position.x+radius*Math.cos(theta), node.position.y-radius*Math.sin(theta));
+        var node = this.node[i];
+        var link = this.link[j];
+        stroke(link.color.r, link.color.g, link.color.b);
+        strokeWeight(link.weight+1);
+        line(node.position.x, node.position.y, node.links[j].position.x, node.links[j].position.y);
+        this.drawArrow(node, node.links[j]);
       }
     }
-  }
-
-  spreadNodes(){
     for(var i = 0; i < this.node.length; i++){
-      for(var j = i+1; j < this.node.length; j++){
-        var node_a = this.node[i];
-        var node_b = this.node[j];
-        var dist = this.getDistance(node_a, node_b);
-        if(dist != 0 && dist <= (node_a.size/2+(node_a.links.length+1)*2)+(node_b.size/2+(node_b.links.length+1)*2)){
-          node_a.move(this.xyOrientation(node_a, node_b));
-        }
-      }
+      var node = this.node[i];
+      fill(node.color.r, node.color.g, node.color.b);
+      stroke(0,0,0);
+      ellipse(node.position.x, node.position.y, node.size);
+      noStroke();
+      stroke(50, 50, 50);
+      fill(0, 200, 0);
+      textSize(14);
+      text(node.label, node.position.x-5, node.position.y+5);
+    }
+    if(this.nodesOverlap){
+      this.spreadNodes(10);
     }
   }
 }
 
 class Node{
-  constructor(label = "", weight = 0, color = {r:255, g:255, b:0}){
+  constructor(label = "", size, weight = 0, color = {r:255, g:255, b:0}){
     this.label = label;
     this.weight = weight;
     this.links = [];
-    this.size = 0;
+    this.size = size;
     this.color = color;
     this.position = {
-      // x: floor(random(this.size+50, windowWidth-this.size-50)),
-      // y: floor(random(this.size+50, windowHeight-this.size-50))
-      x: floor(random(windowWidth/2-0, windowWidth/2+0)),
-      y: floor(random(windowHeight/2-0, windowHeight/2+0))
+      x: floor(random(this.size+50, windowWidth-this.size-50)),
+      y: floor(random(this.size+50, windowHeight-this.size-50))
     }
   }
 
@@ -186,34 +221,29 @@ class Node{
     this.links.push(node);
   }
 
+  normalizePos(){
+    if(this.position.x <= this.size/2+5){
+      this.position.x = this.size/2+5;
+    }else if(this.position.x >= windowWidth-this.size/2-5){
+      this.position.x = windowWidth-this.size/2-5;
+    }
+    if(this.position.y <= this.size/2+5){
+      this.position.y = this.size/2+5;
+    }else if(this.position.y >= windowHeight-this.size/2-5){
+      this.position.y = windowHeight-this.size/2-5;
+    }
+  }
+
   move(delta){
     this.position.x += delta.x;
     this.position.y += delta.y;
-    if(this.position.x <= this.size/2+10){
-      this.position.x = this.size/2+10;
-    }else if(this.position.x >= windowWidth-this.size/2-10){
-      this.position.x = windowWidth-this.size/2-10;
-    }
-    if(this.position.y <= this.size/2+10){
-      this.position.y = this.size/2+10;
-    }else if(this.position.y >= windowHeight-this.size/2-10){
-      this.position.y = windowHeight-this.size/2-10;
-    }
+    this.normalizePos();
   }
 
   setPosition(x, y){
     this.position.x = x;
     this.position.y = y;
-    if(this.position.x <= this.size/2+10){
-      this.position.x = this.size/2+10;
-    }else if(this.position.x >= windowWidth-this.size/2-10){
-      this.position.x = windowWidth-this.size/2-10;
-    }
-    if(this.position.y <= this.size/2+10){
-      this.position.y = this.size/2+10;
-    }else if(this.position.y >= windowHeight-this.size/2-10){
-      this.position.y = windowHeight-this.size/2-10;
-    }
+    this.normalizePos();
   }
 }
 
