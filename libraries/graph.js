@@ -111,7 +111,7 @@ class Graph{
   }
 
   nodesOverlap(){
-    for(var i = 0; i < this.node.length; i++){
+    for(var i = 0; i < this.node.length-1; i++){
       for(var j = i+1; j < this.node.length; j++){
         var node_a = this.node[i];
         var node_b = this.node[j];
@@ -167,7 +167,9 @@ class Graph{
 
   drawArrow(a, b){
     var orientation = this.xyOrientation(a, b);
-    var theta = Math.atan(Math.abs((b.position.y-a.position.y)/(b.position.x-a.position.x)));
+    var delta_x = b.position.x-a.position.x;
+    var delta_y = b.position.y-a.position.y;
+    var theta = Math.atan(Math.abs(delta_y/delta_x));
     var radius = b.size/2;
     var x = b.position.x + radius*Math.cos(theta)*orientation.x;
     var y = b.position.y + radius*Math.sin(theta)*orientation.y;
@@ -192,7 +194,6 @@ class Graph{
       fill(node.color.r, node.color.g, node.color.b);
       stroke(0,0,0);
       ellipse(node.position.x, node.position.y, node.size);
-      noStroke();
       stroke(50, 50, 50);
       fill(0, 200, 0);
       textSize(14);
@@ -222,16 +223,10 @@ class Node{
   }
 
   normalizePos(){
-    if(this.position.x <= this.size/2+5){
-      this.position.x = this.size/2+5;
-    }else if(this.position.x >= windowWidth-this.size/2-5){
-      this.position.x = windowWidth-this.size/2-5;
-    }
-    if(this.position.y <= this.size/2+5){
-      this.position.y = this.size/2+5;
-    }else if(this.position.y >= windowHeight-this.size/2-5){
-      this.position.y = windowHeight-this.size/2-5;
-    }
+    if(this.position.x <= this.size/2+5)this.position.x = this.size/2+5;
+    else if(this.position.x >= windowWidth-this.size/2-5)this.position.x = windowWidth-this.size/2-5;
+    if(this.position.y <= this.size/2+5)this.position.y = this.size/2+5;
+    else if(this.position.y >= windowHeight-this.size/2-5)this.position.y = windowHeight-this.size/2-5;
   }
 
   move(delta){
