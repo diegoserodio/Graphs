@@ -1,6 +1,7 @@
 let graph;
 
 var s = [], t = [], w = [], n = 30, u = ['Diego', 'Diego', 'Diego', 'Mika', 'Pedro', 'Victória', 'Pedro', 'Mika', 'Mika', 'Diego'], v = ['Pedro', 'Mika', 'Henrique', 'Pedro', 'Caique', 'Bruno', 'Guilherme', 'Diego', 'Victória', 'Guilherme'];
+//var m = ['A', 'B', 'C'], n = [['B', 'C'], ['A', 'B'], ['A', 'B']];
 
 function setup() {
 	createCanvas(windowWidth, windowHeight);

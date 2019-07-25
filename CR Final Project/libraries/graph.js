@@ -25,7 +25,6 @@ class Graph{
     var nodes_qtn = 0;
     if(typeof targets[0] == 'object'){
       for(var i = 0; i < source.length; i++){
-        console.log(source[i]);
         if(!this.existsNode(source[i])){
           this.label[source[i]]= nodes_qtn;
           this.node[nodes_qtn] = new Node(source[i], this.size);
@@ -61,11 +60,16 @@ class Graph{
       var links_qtn = 0;
       for(var i = 0; i < source.length; i++){
         var node_a = this.node[this.label[source[i]]];
-        var node_b = this.node[this.label[targets[i][j]]];
         for(var j = 0; j < targets[i].length; j++){
+          var node_b = this.node[this.label[targets[i][j]]];
           node_a.connect(node_b);
           this.link[links_qtn] = new Link(node_a, node_b);
           links_qtn++;
+          if(!this.directed){
+            node_b.connect(node_a);
+            this.link[links_qtn] = new Link(node_b, node_a);
+            links_qtn++;
+          }
         }
       }
     }else{
@@ -226,18 +230,18 @@ class Graph{
       stroke(0,0,0);
       ellipse(node.position.x, node.position.y, node.size);
       stroke(50, 50, 50);
-      fill(0, 200, 0);
+      fill(200, 200, 200);
       textSize(14);
-      text(node.label, node.position.x-5, node.position.y+5);
+      text(i, node.position.x-5, node.position.y+5);
     }
     if(this.nodesOverlap){
-      this.spreadNodes(10);
+      this.spreadNodes(2);
     }
   }
 }
 
 class Node{
-  constructor(label = "", size, weight = 0, color = {r:255, g:255, b:0}){
+  constructor(label = "", size, weight = 0, color = {r:0, g:0, b:0}){
     this.label = label;
     this.weight = weight;
     this.links = [];
@@ -274,7 +278,7 @@ class Node{
 }
 
 class Link{
-  constructor(sourceNode, targetNode, weight = 0, color = {r:255, g:255, b:255}){
+  constructor(sourceNode, targetNode, weight = 0, color = {r:100, g:100, b:100}){
     this.weight = weight;
     this.sourceNode = sourceNode;
     this.targetNode = targetNode;

@@ -25,7 +25,6 @@ class Graph{
     var nodes_qtn = 0;
     if(typeof targets[0] == 'object'){
       for(var i = 0; i < source.length; i++){
-        console.log(source[i]);
         if(!this.existsNode(source[i])){
           this.label[source[i]]= nodes_qtn;
           this.node[nodes_qtn] = new Node(source[i], this.size);
@@ -61,11 +60,16 @@ class Graph{
       var links_qtn = 0;
       for(var i = 0; i < source.length; i++){
         var node_a = this.node[this.label[source[i]]];
-        var node_b = this.node[this.label[targets[i][j]]];
         for(var j = 0; j < targets[i].length; j++){
+          var node_b = this.node[this.label[targets[i][j]]];
           node_a.connect(node_b);
           this.link[links_qtn] = new Link(node_a, node_b);
           links_qtn++;
+          if(!this.directed){
+            node_b.connect(node_a);
+            this.link[links_qtn] = new Link(node_b, node_a);
+            links_qtn++;
+          }
         }
       }
     }else{
