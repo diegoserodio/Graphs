@@ -230,7 +230,7 @@ class Graph{
       stroke(0,0,0);
       ellipse(node.position.x, node.position.y, node.size);
       stroke(50, 50, 50);
-      fill(0, 200, 0);
+      fill(220, 220, 220);
       textSize(14);
       text(node.label, node.position.x-5, node.position.y+5);
     }
@@ -241,7 +241,7 @@ class Graph{
 }
 
 class Node{
-  constructor(label = "", size, weight = 0, color = {r:255, g:255, b:0}){
+  constructor(label = "", size, weight = 0, color = {r:100, g:100, b:100}){
     this.label = label;
     this.weight = weight;
     this.links = [];
@@ -278,7 +278,7 @@ class Node{
 }
 
 class Link{
-  constructor(sourceNode, targetNode, weight = 0, color = {r:255, g:255, b:255}){
+  constructor(sourceNode, targetNode, weight = 0, color = {r:50, g:50, b:50}){
     this.weight = weight;
     this.sourceNode = sourceNode;
     this.targetNode = targetNode;
