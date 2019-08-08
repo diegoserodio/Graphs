@@ -67,3 +67,8 @@ function draw(){
 	graph.show();
 }
 ```
+
+# UPCOMING
+
+- Shortest path (Dijkstra/A*)
+- Generating graph from adjacency matrix
