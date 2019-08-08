@@ -1,6 +1,7 @@
 class Graph{
-  constructor(size = 50, directed = true){
-    this.directed = directed;
+  constructor(size = 50, directed = 'directed'){
+    if(directed == 'directed')this.directed=true;
+    else if(directed == 'non-directed')this.directed=false;
     this.size = size;
     this.node = [];
     this.link = [];
@@ -12,7 +13,150 @@ class Graph{
     this.g.mouseReleased(()=>{this.nodePressed=undefined});
   }
 
-  //////////////////////////////////////////////GRAPH GENERATORS
+  //////////////////////////////////////////////METRICS
+  //TODO Shortest Path
+
+  getMatrix(){
+    var matrix = [];
+    for(var i = 0; i < this.node.length; i++){
+      matrix[i] = [];
+      for(var j = 0; j < this.node.length; j++){
+        var weight = 0;
+        for(var k = 0; k < this.link.length; k++){
+          var node_a = this.node[i], node_b = this.node[j];
+          var link = this.link[k];
+          if((link.sourceNode == node_a && link.targetNode == node_b) || (link.sourceNode == node_b && link.targetNode == node_a)){
+            weight = link.weight;
+          }
+        }
+        matrix[i][j] = weight;
+      }
+    }
+    return matrix;
+  }
+
+  outDegreeCentrality(n = null){
+    var centrality = [];
+    if(n == null){
+      for(var i = 0; i < this.node.length; i++){
+        var node = this.node;
+        centrality[i] = node[i].links.length/(node.length-1);
+      }
+      this.colorizeVertices(centrality, 0,0, 0,0, 0,255);
+    }else{
+      centrality[0] = this.node[n].links.length/(this.node.length-1);
+    }
+    return centrality;
+  }
+
+  inDegreeCentrality(n = null){
+    var centrality = [];
+    if(n == null){
+      for(var i = 0; i < this.node.length; i++){
+        var node = this.node;
+        centrality[i] = node[i].inLinks.length/this.link.length;
+      }
+      this.colorizeVertices(centrality, 0,0, 0,0, 0,255);
+    }else{
+      centrality[0] = this.node[n].inLinks.length/this.link.length;
+    }
+    return centrality;
+  }
+
+  //BUG: NaN when specifing a node
+  eigenvectorCentrality(n = null){
+    var matrix = this.getMatrix(), eigenvector = [];
+    if(n == null){
+      for(var i = 0; i < this.node.length; i++){
+        eigenvector[i] = 0;
+        for(var j = 0; j < this.node[i].links.length; j++){
+          eigenvector[i] += this.node[i].links[j].weight*matrix[i][this.label[this.node[i].links[j].label]];
+        }
+      }
+      this.colorizeVertices(eigenvector, 0,255, 0,0, 0,0);
+    }else{
+      for(var j = 0; j < this.node[n].links.length; j++){
+        eigenvector[0] += this.node[n].links[j].weight*matrix[n][this.label[this.node[n].links[j].label]];
+      }
+    }
+    return eigenvector;
+  }
+
+  clean(){
+    for(var i = 0; i < this.node.length; i++){
+      this.node[i].color = {
+        r: 0,
+        g: 0,
+        b: 0
+      }
+    }
+    for(var i = 0; i < this.link.length; i++){
+      this.link[i].color = {
+        r: 100,
+        g: 100,
+        b: 100
+      }
+    }
+  }
+
+  //////////////////////////////////////////////SAVING ON FILES
+
+  writeMatrix(){
+    var matrix = this.getMatrix();
+    let writer = createWriter('matrix.csv');
+    for(var i = 0; i < this.node.length; i++){
+      writer.write(";");
+      writer.write(i);
+    }
+    writer.write("\n");
+    for(var i = 0; i < this.node.length; i++){
+      writer.write(i);
+      for(var j = 0; j < this.node.length; j++){
+        writer.write(";");
+        writer.write(matrix[i][j]);
+      }
+      writer.write("\n");
+    }
+    writer.close();
+  }
+
+  writeVertexWeights(){
+    let writer = createWriter('vertexWeights.csv');
+    writer.write("Values");
+    writer.write('\n');
+    for(var i = 0; i < this.node.length; i++){
+      writer.write(this.node[i].weight);
+      writer.write('\n');
+    }
+    writer.close();
+  }
+
+  writeLinksWeights(){
+    let writer = createWriter('linksWeights.csv');
+    writer.write("Values");
+    writer.write('\n');
+    for(var i = 0; i < this.link.length; i++){
+      writer.write(this.link[i].weight);
+      writer.write('\n');
+    }
+    writer.close();
+  }
+
+  writeToFile(values, name, normalized=false){
+    var max = this.min_max(values).max;
+    let writer = createWriter(name);
+    writer.write("Values");
+    writer.write('\n');
+    for(var i = 0; i < values.length; i++){
+      if(normalized)writer.write(values[i]/max);
+      else writer.write(values[i]);
+      writer.write('\n');
+    }
+    writer.close();
+  }
+
+  //////////////////////////////////////////////GRAPH GENERATORS/MODIFIERS
+  //TODO Generate graph from matrix
 
   makeEmptyGraph(n){
     for(var i = 0; i < n; i++){
@@ -86,11 +230,24 @@ class Graph{
     this.setLocations();
   }
 
-  setWeights(weights){
+  setLinksWeights(weights){
+    for(var i = 0; i < this.link.length; i++){
+      this.link[i].weight = weights[i];
+    }
+  }
+
+  setVertexWeights(weights){
     for(var i = 0; i < this.node.length; i++){
       if(weights[i]!=0){
         this.node[i].weight = weights[i];
-        this.node[i].size = weights[i];
+      }
+    }
+  }
+
+  setVertexSize(size){
+    for(var i = 0; i < this.node.length; i++){
+      if(size[i]!=0){
+        this.node[i].size = size[i];
       }
     }
   }
@@ -104,6 +261,17 @@ class Graph{
         var x = node.position.x+radius*Math.cos(theta)*20;
         var y = node.position.y-radius*Math.sin(theta)*20;
         this.node[i].links[j].setPosition(x, y);
+      }
+    }
+  }
+
+  colorizeVertices(values, r_min, r_max, g_min, g_max, b_min, b_max){
+    var data = this.min_max(values);
+    for(var i = 0; i < this.node.length; i++){
+      this.node[i].color = {
+        r:map(values[i], data.min, data.max, r_min, r_max),
+        g:map(values[i], data.min, data.max, g_min, g_max),
+        b:map(values[i], data.min, data.max, b_min, b_max)
       }
     }
   }
@@ -132,6 +300,13 @@ class Graph{
       orientation.y = -1;
     }
     return orientation;
+  }
+
+  min_max(values){
+    var data={max:0, min:0};
+    data.max = values.reduce(function(a, b){return Math.max(a, b);});
+    data.min = values.reduce(function(a, b){return Math.min(a, b);});
+    return data;
   }
 
   //////////////////////////////////////////////VALIDATORS
@@ -245,6 +420,7 @@ class Node{
     this.label = label;
     this.weight = weight;
     this.links = [];
+    this.inLinks = [];
     this.size = size;
     this.color = color;
     this.position = {
@@ -255,6 +431,7 @@ class Node{
 
   connect(node){
     this.links.push(node);
+    node.inLinks.push(this);
   }
 
   normalizePos(){

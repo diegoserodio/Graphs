@@ -11,7 +11,7 @@ A library wrote in Javascript with p5.js and node.js that allows for free creati
 
 # Using the library in your javascript project
 
-Copy the library file (graph.js) to your library's folder of your project. It's also necessary to have the p5.js libraries installed in the library's folder. The files index.html and sketch.js required to work with p5.js are also present in the project. The main Javascript file in which the Graph object will be used, need to be called in the html file (```<script src="sketch.js"></script>```)
+Copy the library file (graph.js) to your library's folder of your project. It's also necessary to have the p5.js libraries installed in the library's folder. The files index.html and sketch.js required to work with p5.js are also present in the project. The main Javascript file in which the Graph object will be used, need to be called in the html file (```html<script src="sketch.js"></script>```)
 
 # Running the examples
 
