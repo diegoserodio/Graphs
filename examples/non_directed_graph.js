@@ -14,7 +14,7 @@ function setup() { //Função da biblioteca p5.js, executada uma vez no início 
 	}
 	//Instanciando o objeto grafo, o primeiro parâmetro passado defini o tamanho do nó
 	//o segundo parâmetro define o grafo como não-direcionado (directed=false)
-	graph = new Graph(100, false);
+	graph = new Graph(100, 'non-directed');
   graph.makeEmptyGraph(n); //Inicializando um grafo vazio com n vértices
 	graph.createLinks(s, t); //Cria os links usando arrays
 }
